@@ -23,8 +23,13 @@ InvisibleRDP is a Windows Service-based remote desktop solution that emphasizes 
 ### Key Features
 
 ✅ **Mandatory User Consent**: No remote access is possible without explicit, documented user consent  
+✅ **System Tray Visibility**: Always-visible system tray icon showing service status  
+✅ **Visual Consent UI**: WPF-based consent dialog with full EULA and acceptance tracking  
 ✅ **Comprehensive Audit Logging**: Every connection attempt and session is logged with full details  
-✅ **Encrypted Communications**: All remote sessions use TLS/SSL encryption (stub implementation)  
+✅ **Real-Time Remote Desktop**: View and control remote desktop with mouse/keyboard support  
+✅ **Password Authentication**: Secure connection with configurable access passwords  
+✅ **Network Server**: Built-in RDP server on configurable port (default: 9876)  
+✅ **Windows Installers**: Easy-to-use MSI installers for both Host and Viewer  
 ✅ **Windows Service Architecture**: Runs as a background service ("SystemHostSvc") with system boot startup  
 ✅ **Clean Uninstallation**: Complete removal tool that deletes all data, logs, and registry entries  
 ✅ **Registry-Based Configuration**: Persistent configuration storage in Windows Registry  
@@ -34,7 +39,7 @@ InvisibleRDP is a Windows Service-based remote desktop solution that emphasizes 
 
 ## Architecture
 
-The solution consists of four main projects:
+The solution consists of six main projects:
 
 ### 1. InvisibleRDP.Core
 Core library containing all business logic, models, and services.
@@ -42,10 +47,10 @@ Core library containing all business logic, models, and services.
 **Key Components:**
 - **ConsentService**: Manages user consent records with cryptographic signatures
 - **AuditLogger**: Logs all connection attempts and sessions with automatic rotation
-- **SessionHandler**: Manages active remote desktop sessions (stub implementation)
+- **SessionHandler**: Manages active remote desktop sessions
 - **RegistryService**: Handles Windows Registry operations for configuration
+- **RdpServer**: Network server for accepting remote connections
 - **EncryptionHelper**: Provides cryptographic utilities and TLS/SSL stubs
-- **ProcessObfuscator**: Stub for process name obfuscation (ethical considerations)
 
 ### 2. InvisibleRDP.Service
 Windows Service application that runs as "SystemHostSvc".
@@ -53,12 +58,35 @@ Windows Service application that runs as "SystemHostSvc".
 **Responsibilities:**
 - Runs headless as a background Windows Service
 - Checks for user consent on first run
+- Starts RDP server on port 9876
 - Monitors for incoming connection requests
 - Manages active sessions and performs maintenance
 - Automatically rotates logs and cleans up expired data
 
-### 3. InvisibleRDP.ConsentUI
-Console application for obtaining user consent (GUI stub).
+### 3. InvisibleRDP.SystemTray
+WPF system tray application for host visibility and control.
+
+**Features:**
+- System tray icon with context menu
+- Visual consent dialog with EULA acceptance
+- Logs viewer window for monitoring connections
+- Status window showing active sessions
+- Toast notifications for connection attempts
+- Easy service control (start/stop)
+- Always visible to user, never hidden
+
+### 4. InvisibleRDP.Viewer
+WPF client application for viewing and controlling remote desktop.
+
+**Features:**
+- Connect dialog for entering host IP and password
+- Real-time remote desktop viewing
+- Mouse and keyboard control
+- Secure encrypted connection
+- Session management
+
+### 5. InvisibleRDP.ConsentUI
+Console application for obtaining user consent (legacy).
 
 **Features:**
 - Presents comprehensive consent text to users
@@ -66,7 +94,7 @@ Console application for obtaining user consent (GUI stub).
 - Validates consent before allowing remote access
 - Marks service as "first run completed" in registry
 
-### 4. InvisibleRDP.Uninstaller
+### 6. InvisibleRDP.Uninstaller
 Utility for complete system cleanup.
 
 **Cleanup Operations:**
@@ -81,10 +109,39 @@ Utility for complete system cleanup.
 
 ### Prerequisites
 - Windows 10/11 or Windows Server 2016+
-- .NET 8.0 Runtime or SDK
+- .NET 8.0 Runtime (included with installers)
 - Administrator privileges for service installation
 
-### Step 1: Build the Solution
+### Option 1: Using Installers (Recommended)
+
+#### Host Installation
+
+1. **Download** `InvisibleRDP-Host-Setup.msi` from the releases page
+2. **Run the installer** with administrator privileges
+3. **Accept consent dialog** - You will be prompted to read and accept the consent agreement
+4. **Complete installation** - The service and system tray app will start automatically
+
+**What gets installed:**
+- SystemHostSvc Windows Service (runs on startup)
+- InvisibleRDP.SystemTray application (in system tray)
+- Service files in `C:\Program Files\InvisibleRDP\Host`
+- Configuration in Windows Registry
+
+#### Viewer Installation
+
+1. **Download** `InvisibleRDP-Viewer-Setup.msi` from the releases page
+2. **Run the installer** - No special privileges needed
+3. **Launch from Start Menu** or Desktop shortcut
+4. **Connect to a host** by entering IP address and password
+
+**What gets installed:**
+- InvisibleRDP.Viewer application
+- Start Menu and Desktop shortcuts
+- Program files in `C:\Program Files\InvisibleRDP\Viewer`
+
+### Option 2: Building from Source
+
+#### Step 1: Build the Solution
 
 ```bash
 git clone https://github.com/fmuoria/Invisible-RDP.git
@@ -92,12 +149,19 @@ cd Invisible-RDP
 dotnet build InvisibleRDP.sln --configuration Release
 ```
 
-### Step 2: Grant User Consent (MANDATORY)
+#### Step 2: Build Installers (Windows Only)
 
-Before the service can accept connections, user consent must be obtained:
+See [Installers/README.md](Installers/README.md) for detailed instructions on building the MSI installers.
 
-```bash
-cd InvisibleRDP.ConsentUI\bin\Release\net8.0
+#### Step 3: Install Host Manually
+
+```powershell
+# Run the system tray app (will prompt for consent)
+.\InvisibleRDP.SystemTray\bin\Release\net8.0-windows\InvisibleRDP.SystemTray.exe
+
+# Install the Windows Service
+sc create SystemHostSvc binPath="<path>\InvisibleRDP.Service.exe" start=auto
+sc start SystemHostSvc
 InvisibleRDP.ConsentUI.exe
 ```
 
