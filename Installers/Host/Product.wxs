@@ -28,7 +28,6 @@
     <InstallExecuteSequence>
       <Custom Action="ShowConsentDialog" Before="InstallFiles">NOT Installed</Custom>
     </InstallExecuteSequence>
-    
   </Package>
 
   <!-- User consent property and condition (move outside of <Package> as WiX4 does not support <Condition> here) -->
