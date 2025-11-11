@@ -17,45 +17,47 @@
     <ui:WixUI Id="WixUI_Minimal" />
     <UIRef Id="WixUI_ErrorProgressText" />
     
-    <!-- Custom consent dialog -->
+    <!-- Custom consent dialog (WiX4 compliant) -->
     <CustomAction Id="ShowConsentDialog" 
                   BinaryRef="CustomActions" 
                   DllEntry="ShowConsent" 
                   Execute="immediate" 
                   Return="check" />
-    
+
+    <!-- Install sequence, WiX v4 format -->
     <InstallExecuteSequence>
       <Custom Action="ShowConsentDialog" Before="InstallFiles">NOT Installed</Custom>
     </InstallExecuteSequence>
+    
+  </Package>
 
-    <!-- Features -->
+  <!-- User consent property and condition (move outside of <Package> as WiX4 does not support <Condition> here) -->
+  <Property Id="USER_CONSENT" Value="0" />
+  <Condition Message="User consent is required to install InvisibleRDP Host.">
+    USER_CONSENT = "1" OR Installed
+  </Condition>
+
+  <!-- Features -->
+  <Fragment>
     <Feature Id="Complete" Level="1">
       <ComponentGroupRef Id="ProductComponents" />
       <ComponentGroupRef Id="ServiceComponents" />
     </Feature>
-    
-    <!-- Property for consent -->
-    <Property Id="USER_CONSENT" Value="0" />
-    <Condition Message="User consent is required to install InvisibleRDP Host.">
-      USER_CONSENT = "1" OR Installed
-    </Condition>
-  </Package>
+  </Fragment>
 
-  <!-- Directory structure -->
+  <!-- Directory structure: use StandardDirectory for WiX v4 -->
   <Fragment>
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLFOLDER" Name="InvisibleRDP">
-          <Directory Id="HostFolder" Name="Host" />
-        </Directory>
-      </Directory>
-      <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" Name="InvisibleRDP" />
-      </Directory>
-      <Directory Id="CommonAppDataFolder">
-        <Directory Id="AppDataFolder" Name="InvisibleRDP" />
-      </Directory>
-    </Directory>
+    <StandardDirectory Id="ProgramFilesFolder">
+      <StandardDirectory Id="INSTALLFOLDER" Name="InvisibleRDP">
+        <StandardDirectory Id="HostFolder" Name="Host" />
+      </StandardDirectory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <StandardDirectory Id="ApplicationProgramsFolder" Name="InvisibleRDP" />
+    </StandardDirectory>
+    <StandardDirectory Id="CommonAppDataFolder">
+      <StandardDirectory Id="AppDataFolder" Name="InvisibleRDP" />
+    </StandardDirectory>
   </Fragment>
 
   <!-- Components -->
