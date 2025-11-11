@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  
+  <Package Name="InvisibleRDP Viewer" 
+           Manufacturer="InvisibleRDP"
+           Version="1.0.0.0"
+           UpgradeCode="87654321-4321-4321-4321-CBA987654321"
+           InstallerVersion="500"
+           Compressed="yes">
+    
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- UI -->
+    <ui:WixUI Id="WixUI_Minimal" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+
+    <!-- Features -->
+    <Feature Id="Complete" Level="1">
+      <ComponentGroupRef Id="ViewerComponents" />
+    </Feature>
+  </Package>
+
+  <!-- Directory structure -->
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="InvisibleRDP">
+          <Directory Id="ViewerFolder" Name="Viewer" />
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="InvisibleRDP" />
+      </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
+    </Directory>
+  </Fragment>
+
+  <!-- Components -->
+  <Fragment>
+    <ComponentGroup Id="ViewerComponents" Directory="ViewerFolder">
+      <Component Id="ViewerApp" Guid="44444444-4444-4444-4444-444444444444">
+        <File Id="ViewerExe" 
+              Source="..\..\InvisibleRDP.Viewer\bin\Release\net8.0-windows\InvisibleRDP.Viewer.exe"
+              KeyPath="yes" />
+        
+        <!-- Start menu shortcut -->
+        <Shortcut Id="ViewerStartMenu"
+                  Directory="ApplicationProgramsFolder"
+                  Name="InvisibleRDP Viewer"
+                  Description="Remote Desktop Viewer Application"
+                  WorkingDirectory="ViewerFolder"
+                  Icon="ViewerIcon.exe"
+                  IconIndex="0"
+                  Advertise="yes" />
+        
+        <!-- Desktop shortcut -->
+        <Shortcut Id="ViewerDesktop"
+                  Directory="DesktopFolder"
+                  Name="InvisibleRDP Viewer"
+                  Description="Remote Desktop Viewer Application"
+                  WorkingDirectory="ViewerFolder"
+                  Icon="ViewerIcon.exe"
+                  IconIndex="0"
+                  Advertise="yes" />
+      </Component>
+      
+      <Component Id="ViewerCoreLibrary" Guid="55555555-5555-5555-5555-555555555555">
+        <File Source="..\..\InvisibleRDP.Core\bin\Release\net8.0\InvisibleRDP.Core.dll" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <!-- Icon -->
+  <Fragment>
+    <Icon Id="ViewerIcon.exe" SourceFile="..\..\InvisibleRDP.Viewer\bin\Release\net8.0-windows\InvisibleRDP.Viewer.exe" />
+  </Fragment>
+</Wix>

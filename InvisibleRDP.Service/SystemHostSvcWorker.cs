@@ -20,6 +20,7 @@ namespace InvisibleRDP.Service
         private readonly IAuditLogger _auditLogger;
         private readonly ISessionHandler _sessionHandler;
         private readonly IRegistryService _registryService;
+        private RdpServer? _rdpServer;
 
         public SystemHostSvcWorker(
             ILogger<SystemHostSvcWorker> logger,
@@ -41,6 +42,14 @@ namespace InvisibleRDP.Service
 
             // Check if this is first run - if so, consent must be obtained
             await CheckFirstRunConsentAsync();
+
+            // Start RDP server
+            var password = await _registryService.ReadStringAsync(
+                RegistryService.GetAppRegistryPath(), "AccessPassword") ?? "default";
+            
+            _rdpServer = new RdpServer(_consentService, _auditLogger, _sessionHandler, 9876, password);
+            await _rdpServer.StartAsync();
+            _logger.LogInformation("RDP Server started on port 9876");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -135,6 +144,13 @@ namespace InvisibleRDP.Service
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("SystemHostSvc is stopping - terminating all active sessions");
+
+            // Stop RDP server
+            if (_rdpServer != null)
+            {
+                await _rdpServer.StopAsync();
+                _logger.LogInformation("RDP Server stopped");
+            }
 
             // Terminate all active sessions gracefully
             var activeSessions = await _sessionHandler.GetActiveSessionsAsync();
